@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import org.jetbrains.kotlin.gradle.dsl.ExplicitApiMode
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.properties.loadProperties
@@ -29,6 +30,9 @@ java {
 tasks.withType<KotlinCompile> {
 	compilerOptions {
 		jvmTarget.set(JvmTarget.JVM_1_8)
+
+		if (sourceSetName.get() == "main")
+			explicitApiMode.set(ExplicitApiMode.Strict)
 	}
 }
 

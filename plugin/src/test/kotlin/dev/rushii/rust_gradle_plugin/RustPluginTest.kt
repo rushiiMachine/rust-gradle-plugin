@@ -1,34 +1,28 @@
 package dev.rushii.rust_gradle_plugin
 
+import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-class TemplatePluginTest {
+fun newProject(): Project {
+	return ProjectBuilder.builder().build()
+		.also { it.pluginManager.apply("dev.rushii.rust-gradle-plugin") }
+}
+
+class RustPluginTest {
 	@JvmField
 	@Rule
 	var testProjectDir: TemporaryFolder = TemporaryFolder()
 
 	@Test
 	fun `plugin is applied correctly to the project`() {
-		val project = ProjectBuilder.builder().build()
-		project.pluginManager.apply("dev.rushii.rust-gradle-plugin")
-
-		assert(project.tasks.getByName("templateExample") is TemplateExampleTask)
-	}
-
-	@Test
-	fun `extension templateExampleConfig is created correctly`() {
-		val project = ProjectBuilder.builder().build()
-		project.pluginManager.apply("dev.rushii.rust-gradle-plugin")
-
-		assertNotNull(project.extensions.getByName("templateExampleConfig"))
+		assert(newProject().extensions.getByName("rust") is RustConfigExtension)
 	}
 
 	@Test
@@ -36,13 +30,13 @@ class TemplatePluginTest {
 		val project = ProjectBuilder.builder().build()
 		project.pluginManager.apply("dev.rushii.rust-gradle-plugin")
 		val aFile = File(project.projectDir, ".tmp")
-		(project.extensions.getByName("templateExampleConfig") as TemplateExtension).apply {
+		(project.extensions.getByName("templateExampleConfig") as RustConfigExtension).apply {
 			tag.set("a-sample-tag")
 			message.set("just-a-message")
 			outputFile.set(aFile)
 		}
 
-		val task = project.tasks.getByName("templateExample") as TemplateExampleTask
+		val task = project.tasks.getByName("templateExample") as CargoBuildTask
 
 		assertEquals("a-sample-tag", task.tag.get())
 		assertEquals("just-a-message", task.message.get())
@@ -61,7 +55,7 @@ class TemplatePluginTest {
 		val gradleResult = executeGradleRun("templateExample")
 		assert(gradleResult.output.contains("message is: $message"))
 
-		val generatedFileText = (testProjectDir.root / "build" / "template-example.txt").readText()
+		val generatedFileText = (testProjectDir.root.resolve("build/template-example.txt")).readText()
 		assert(generatedFileText == "[tag] $message")
 	}
 
@@ -89,5 +83,3 @@ private fun File.removeRecursively() =
 		.walkBottomUp()
 		.filter { it != this }
 		.forEach { it.deleteRecursively() }
-
-private operator fun File.div(s: String): File = this.resolve(s)
