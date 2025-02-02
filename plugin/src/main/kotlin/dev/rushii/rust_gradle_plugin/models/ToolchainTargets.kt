@@ -1,6 +1,6 @@
 package dev.rushii.rust_gradle_plugin.models
 
-public class CargoToolchain private constructor(
+public class ToolchainTargets private constructor(
 	internal val type: Type,
 	internal val cargoTarget: String,
 	internal val androidCompilerTriple: String? = null,
@@ -21,10 +21,11 @@ public class CargoToolchain private constructor(
 
 	public companion object {
 		/**
-		 * Obtains a toolchain
+		 * Obtains a list of target triples for the specified cargo target triple.
+		 * @param targetName A cargo triple as defined [here](https://doc.rust-lang.org/nightly/rustc/platform-support.html).
 		 * @throws IllegalArgumentException
 		 */
-		public fun getForTarget(targetName: String): CargoToolchain {
+		public fun getForTarget(targetName: String): ToolchainTargets {
 			if (targetName.count { it == '-' } < 2)
 				throw IllegalArgumentException("Invalid target triple! ($targetName)")
 
@@ -33,32 +34,32 @@ public class CargoToolchain private constructor(
 				return toolchain
 			}
 
-			return CargoToolchain(
+			return ToolchainTargets(
 				type = Type.Desktop, // Unknown, assumed will build correctly
 				cargoTarget = targetName,
 			)
 		}
 
 		private val PREDEFINED_TOOLCHAINS = arrayOf(
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidGenerated,
 				cargoTarget = "armv7-linux-androideabi",
 				androidCompilerTriple = "arm-linux-androideabi",
 				androidBinutilsTriple = "arm-linux-androideabi",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidGenerated,
 				cargoTarget = "aarch64-linux-android",
 				androidCompilerTriple = "aarch64-linux-android",
 				androidBinutilsTriple = "aarch64-linux-android",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidGenerated,
 				cargoTarget = "i686-linux-android",
 				androidCompilerTriple = "i686-linux-android",
 				androidBinutilsTriple = "i686-linux-android",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidGenerated,
 				cargoTarget = "x86_64-linux-android",
 				androidCompilerTriple = "x86_64-linux-android",
@@ -69,25 +70,25 @@ public class CargoToolchain private constructor(
 			// but the binutils tools are prefixed with arm-linux-androideabi.
 			// For other architectures, the prefixes are the same for all tools."
 			// (Ref: https://developer.android.com/ndk/guides/other_build_systems#overview)
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidPrebuilt,
 				cargoTarget = "armv7-linux-androideabi",
 				androidCompilerTriple = "armv7a-linux-androideabi",
 				androidBinutilsTriple = "arm-linux-androideabi",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidPrebuilt,
 				cargoTarget = "aarch64-linux-android",
 				androidCompilerTriple = "aarch64-linux-android",
 				androidBinutilsTriple = "aarch64-linux-android",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidPrebuilt,
 				cargoTarget = "i686-linux-android",
 				androidCompilerTriple = "i686-linux-android",
 				androidBinutilsTriple = "i686-linux-android",
 			),
-			CargoToolchain(
+			ToolchainTargets(
 				type = Type.AndroidPrebuilt,
 				cargoTarget = "x86_64-linux-android",
 				androidCompilerTriple = "x86_64-linux-android",

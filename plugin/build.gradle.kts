@@ -57,8 +57,8 @@ gradlePlugin {
 	vcsUrl.set(pluginProperties.getProperty("VCS_URL"))
 
 	plugins {
-		create(pluginProperties.getProperty("ID")) {
-			id = pluginProperties.getProperty("ID")
+		create(pluginProperties.getProperty("PLUGIN_ID")) {
+			id = pluginProperties.getProperty("PLUGIN_ID")
 			implementationClass = pluginProperties.getProperty("IMPLEMENTATION_CLASS")
 			version = pluginProperties.getProperty("VERSION")
 			description = pluginProperties.getProperty("DESCRIPTION")
