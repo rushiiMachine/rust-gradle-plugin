@@ -5,14 +5,10 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.konan.properties.loadProperties
 
-val pluginProperties = loadProperties(file("plugin.properties").absolutePath)
-
 plugins {
 	`java-gradle-plugin`
 	alias(libs.plugins.kotlin)
-	alias(libs.plugins.ktlint)
 	alias(libs.plugins.pluginPublish)
-	alias(libs.plugins.versionCheck)
 }
 
 dependencies {
@@ -36,18 +32,7 @@ tasks.withType<KotlinCompile> {
 	}
 }
 
-ktlint {
-	debug.set(false)
-	verbose.set(true)
-	android.set(false)
-	outputToConsole.set(true)
-	ignoreFailures.set(false)
-	enableExperimentalRules.set(true)
-	filter {
-		exclude("**/generated/**")
-		include("**/kotlin/**")
-	}
-}
+val pluginProperties = loadProperties(file("plugin.properties").absolutePath)
 
 group = pluginProperties["GROUP"].toString()
 version = pluginProperties.getProperty("VERSION")
