@@ -1,4 +1,4 @@
-package dev.rushii.rust_gradle_plugin.models
+package dev.rushii.rgp.models
 
 public class ToolchainTargets private constructor(
 	internal val type: Type,

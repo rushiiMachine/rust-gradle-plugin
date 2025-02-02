@@ -1,4 +1,4 @@
-package dev.rushii.rust_gradle_plugin
+package dev.rushii.rgp
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin

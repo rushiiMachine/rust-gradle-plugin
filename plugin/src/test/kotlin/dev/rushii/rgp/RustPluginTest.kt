@@ -1,4 +1,4 @@
-package dev.rushii.rust_gradle_plugin
+package dev.rushii.rgp
 
 import org.gradle.api.Project
 import org.gradle.testfixtures.ProjectBuilder

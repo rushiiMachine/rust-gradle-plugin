@@ -1,6 +1,6 @@
-package dev.rushii.rust_gradle_plugin
+package dev.rushii.rgp
 
-import dev.rushii.rust_gradle_plugin.models.ToolchainTargets
+import dev.rushii.rgp.models.ToolchainTargets
 import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
