@@ -2,11 +2,14 @@ package dev.rushii.rgp
 
 import dev.rushii.rgp.models.ToolchainTargets
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
+import org.gradle.process.ExecOperations
 import java.io.File
 import java.io.FileNotFoundException
+import javax.inject.Inject
 
 /**
  * Task that builds a Cargo project for a single target, with the config
@@ -31,6 +34,16 @@ public abstract class CargoBuildTask : DefaultTask() {
 	@get:Input
 	public abstract val target: Property<String>
 
+	// All inputs must be cached outside the task action (using Task.project accessor is disallowed)
+	@get:Inject
+	internal abstract val execOperations: ExecOperations
+
+	@get:Inject
+	internal abstract val fsOperations: FileSystemOperations
+
+	private val gradleProjectDir = project.projectDir
+	private val outputDir = target.map { project.layout.buildDirectory.get().dir("rustLibs").dir(it) }
+
 	@TaskAction
 	private fun run() {
 		// ------------ Property retrieval ------------ //
@@ -52,7 +65,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// Obtain resolved cargo project path
 		val projectPath = when (File(projectPathRaw).isAbsolute) {
 			true -> File(projectPathRaw)
-			else -> File(project.projectDir, projectPathRaw)
+			else -> File(gradleProjectDir, projectPathRaw)
 		}
 
 		// Make a list of all files to copy from the Cargo target build dir
@@ -84,7 +97,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		// ------------ Cargo Execution ------------ //
 
-		project.exec { spec ->
+		execOperations.exec { spec ->
 			spec.commandLine = cargoCommandLine
 			spec.workingDir = projectPath
 			spec.standardOutput = System.out
@@ -93,9 +106,9 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		// ------------ Artifact copying ------------ //
 
-		project.copy { spec ->
+		fsOperations.copy { spec ->
 			spec.from(projectPath.resolve("target/$target/$profile"))
-			spec.into(project.layout.buildDirectory.get().dir("rustLibs").dir(target))
+			spec.into(outputDir)
 			spec.include(buildIncludes)
 		}
 	}
