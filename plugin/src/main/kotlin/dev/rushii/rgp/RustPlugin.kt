@@ -9,7 +9,13 @@ internal abstract class RustPlugin : Plugin<Project> {
 	override fun apply(project: Project) {
 		val extension = project.extensions.create("rust", RustConfigExtension::class.java, project)
 
-		project.afterEvaluate { registerBuildTasks(project, extension) }
+		// Wait until extension has been configured
+		project.afterEvaluate {
+			// Wait until all `afterEvaluate` have run to wait for any config changes to perform
+			project.afterEvaluate {
+				registerBuildTasks(project, extension)
+			}
+		}
 	}
 
 	private fun registerBuildTasks(project: Project, extension: RustConfigExtension) {
