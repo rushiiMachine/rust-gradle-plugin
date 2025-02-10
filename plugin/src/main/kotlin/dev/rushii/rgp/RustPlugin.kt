@@ -34,6 +34,8 @@ internal abstract class RustPlugin : Plugin<Project> {
 
 				buildAllTask.dependsOn(buildTask)
 			}
+
+			cargoProject.targets.disallowChanges()
 		}
 	}
 

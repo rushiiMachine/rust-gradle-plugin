@@ -13,7 +13,7 @@ rust {
 			projectPath.set("./src/main/rust")
 			libName.set("hello")
 			profile.set("release")
-			targets.addAll("x86_64-pc-windows-msvc", "x86_64-unknown-linux-gnu")
+			targets.addAll("x86_64-pc-windows-msvc", "i686-pc-windows-msvc")
 		}
 	}
 }
