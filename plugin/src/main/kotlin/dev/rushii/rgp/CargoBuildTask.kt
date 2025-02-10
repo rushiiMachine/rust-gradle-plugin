@@ -1,6 +1,7 @@
 package dev.rushii.rgp
 
-import dev.rushii.rgp.models.ToolchainTargets
+import dev.rushii.rgp.toolchains.AndroidToolchainInfo
+import dev.rushii.rgp.toolchains.ToolchainInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
@@ -49,8 +50,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Property retrieval ------------ //
 
 		val cargoProject = cargoProject.get()
-		val toolchainTargets = ToolchainTargets.getForTarget(target.get())
-		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainTargets.cargoTarget}")
+		val toolchainInfo = ToolchainInfo.getForCargoTarget(target.get())
+		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainInfo.cargoTarget}")
 
 		val projectPathRaw = cargoProject.projectPath.get()
 		val cargoExe = cargoProject.cargoExecutable.get()
