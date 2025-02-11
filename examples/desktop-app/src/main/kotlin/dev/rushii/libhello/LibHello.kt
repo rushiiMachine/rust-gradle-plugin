@@ -6,10 +6,10 @@ public class LibHello {
 	 */
 	public external fun helloWorld(name: String): String
 
-	// This essentially acts like a static initializer block for the LibHello class
 	private companion object {
 		init {
-			System.loadLibrary("libhello")
+			// This requires the library to be on the java.library.path
+			System.loadLibrary("hello")
 		}
 	}
 }

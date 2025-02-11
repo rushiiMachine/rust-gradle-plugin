@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.konan.properties.loadProperties
 
 plugins {
 	`java-gradle-plugin`
-	alias(libs.plugins.kotlin)
+	alias(libs.plugins.kotlin.jvm)
 	alias(libs.plugins.pluginPublish)
 }
 

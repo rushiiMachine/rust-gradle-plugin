@@ -3,4 +3,5 @@
 /**/build/
 /**/.idea/
 /**/.iml
-/example/**/target/
+/**/target/
+/local.properties

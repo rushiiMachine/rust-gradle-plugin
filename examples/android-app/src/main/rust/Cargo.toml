@@ -1,0 +1,22 @@
+[package]
+name = "libhello"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "hello"
+crate-type = ["cdylib"]
+
+# Optimize for size
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true
+codegen-units = 1
+
+[dependencies]
+android_log = "0.1.3"
+log = "0.4.25"
+jni = "0.21.1"
+jni_fn = "0.1.2"
