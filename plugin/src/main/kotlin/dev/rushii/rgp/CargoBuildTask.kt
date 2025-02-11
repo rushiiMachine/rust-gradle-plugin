@@ -59,7 +59,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Property retrieval ------------ //
 
 		val cargoProject = cargoProject.get()
-		val toolchainInfo = ToolchainInfo.getForCargoTarget(target.get())
+		val toolchainInfo = ToolchainInfo.getForCargoTarget(targetName = target.get(), android = cargoProject.android)
+
 		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainInfo.cargoTarget}")
 
 		val projectPathRaw = cargoProject.projectPath.get()

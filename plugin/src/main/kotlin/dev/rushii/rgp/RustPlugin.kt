@@ -1,5 +1,7 @@
 package dev.rushii.rgp
 
+import dev.rushii.rgp.toolchains.AndroidNdkInfo
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -10,28 +12,33 @@ internal abstract class RustPlugin : Plugin<Project> {
 
 		// Wait until extension has been configured
 		project.afterEvaluate {
-			// Wait until all `afterEvaluate` have run to wait for any config changes to perform
+			// Wait until all `afterEvaluate` have completed to wait for any `afterEvaluate` user config changes
 			project.afterEvaluate {
-				registerBuildTasks(project, extension)
+				configurePlugin(project, extension)
 			}
 		}
 	}
 
-	private fun registerBuildTasks(project: Project, extension: RustConfigExtension) {
-		// Task to build all targets of all projects
-		val buildAllTask = project.tasks.maybeCreate("cargoBuildAll").apply {
-			group = TASK_GROUP
-			description = "Build all targets for all Cargo projects"
-		}
-
+	private fun configurePlugin(project: Project, extension: RustConfigExtension) {
 		// Obtain the Android NDK if any project has an Android target
 		val androidNdk = when (extension.cargoProjects.any { it.hasAndroidTargets() }) {
 			false -> null
 			true -> project.extensions.getAndroid().getNdkInfo()
 		}
 
+		// Task to build all targets of all projects
+		val buildAllTask = project.tasks.maybeCreate("cargoBuildAll").apply {
+			group = TASK_GROUP
+			description = "Build all targets for all Cargo projects"
+		}
+
 		for (cargoProject in extension.cargoProjects) {
 			cargoProject.targets.disallowChanges()
+
+			// Configure for Android if it builds for an Android target
+			if (cargoProject.hasAndroidTargets()) {
+				configureCargoProjectAndroid(project, cargoProject, androidNdk!!)
+			}
 
 			// Task to build all targets of this specific project
 			val buildAllProjectTask = project.tasks.maybeCreate("cargoBuildAll-${cargoProject.name.get()}").apply {
@@ -54,6 +61,27 @@ internal abstract class RustPlugin : Plugin<Project> {
 				buildAllProjectTask.dependsOn(buildTask)
 			}
 		}
+		}
+	}
+
+	private fun configureCargoProjectAndroid(project: Project, cargoProject: CargoProjectDeclaration, ndk: AndroidNdkInfo) {
+		val android = project.extensions.getAndroid()
+
+		// NDK versions below 19 do not have prebuilt toolchains
+		if (cargoProject.android.usePrebuiltToolchain.getOrElse(false) && ndk.versionMajor < 19) {
+			throw GradleException("usePrebuiltToolchain=true requires NDK version 19+")
+		}
+
+		// Configure whether the project should use prebuilt toolchains if it has not already done so
+		if (!cargoProject.android.usePrebuiltToolchain.isPresent)
+			cargoProject.android.usePrebuiltToolchain.set(ndk.versionMajor >= 19)
+
+		// Fill in AGP minSdkVersion as apiLevel for project
+		if (!cargoProject.android.apiLevel.isPresent) {
+			val minSdkVersion = android.defaultConfig.minSdkVersion?.apiLevel
+				?: throw GradleException("Neither apiLevel or minSdkVersion is configured for the cargo project ${cargoProject.name}")
+
+			cargoProject.android.apiLevel.set(minSdkVersion)
 		}
 	}
 
