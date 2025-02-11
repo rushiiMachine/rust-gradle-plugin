@@ -2,9 +2,7 @@ package dev.rushii.rgp
 
 import org.gradle.api.Named
 import org.gradle.api.Project
-import org.gradle.api.provider.ListProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.SetProperty
+import org.gradle.api.provider.*
 import javax.inject.Inject
 
 /**
@@ -80,6 +78,13 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	 * This does not replace any Cargo arguments added by this plugin.
 	 */
 	public val cargoArguments: ListProperty<String> = project.objects.listProperty(String::class.java)
+
+	/**
+	 * Optional extra environment variables to pass to Cargo when running a build for a target.
+	 *
+	 * Any conflicting entries will overwrite the environment variables set by this plugin.
+	 */
+	public val cargoEnvironmentVariables: MapProperty<String, Any> = project.objects.mapProperty(String::class.java, Any::class.java)
 
 	/**
 	 * A list of targets that will each be built by Cargo.

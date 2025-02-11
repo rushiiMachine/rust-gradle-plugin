@@ -56,6 +56,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 		val projectPathRaw = cargoProject.projectPath.get()
 		val cargoExe = cargoProject.cargoExecutable.get()
 		val extraArguments = cargoProject.cargoArguments.get()
+		val extraEnvVars = cargoProject.cargoEnvironmentVariables.get()
 		val profile = cargoProject.profile.get()
 		val target = target.get()
 		val libName = cargoProject.libName.orNull
@@ -83,6 +84,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 			else -> extraIncludes
 		}
 
+		val cargoEnvVars = mutableMapOf<String, Any?>()
 		val cargoCommandLine = mutableListOf(
 			cargoExe,
 			"build",
@@ -90,6 +92,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 			"--profile=$profile",
 			*extraArguments.toTypedArray(),
 		)
+
+		cargoEnvVars.putAll(extraEnvVars)
 
 		// ------------ Validation ------------ //
 
@@ -100,6 +104,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		execOperations.exec { spec ->
 			spec.commandLine = cargoCommandLine
+			spec.environment = cargoEnvVars
 			spec.workingDir = projectPath
 			spec.standardOutput = System.out
 			spec.errorOutput = System.err
