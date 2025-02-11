@@ -4,6 +4,7 @@ import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
+import org.gradle.api.GradleException
 import org.gradle.api.plugins.ExtensionContainer
 import java.io.File
 import java.util.*
@@ -16,22 +17,21 @@ internal fun ExtensionContainer.getAndroid(): BaseExtension {
 	val extension = try {
 		findByType(AppExtension::class.java) ?: findByType(LibraryExtension::class.java)
 	} catch (_: ClassNotFoundException) {
-		throw IllegalStateException("Cannot use a AndroidGenerateToolchainsTask in a project without the Android Gradle plugin applied")
+		throw GradleException("Cannot use a AndroidGenerateToolchainsTask in a project without the Android Gradle plugin applied")
 	}
 
-	return extension ?: throw IllegalStateException("Failed to find a Android Gradle plugin extension in this project")
+	return extension ?: throw GradleException("Failed to find a Android Gradle plugin extension in this project")
 }
 
 /**
- * Obtains info about the Android NDK from a AGP extension.
+ * Obtains info about the Android NDK from an AGP extension.
  */
 internal fun BaseExtension.getNdkInfo(): AndroidNdkInfo {
-	val ndkProps = Properties()
-	val ndkSourcePropertiesFile = File(ndkDirectory, "source.properties")
-	if (ndkSourcePropertiesFile.exists()) {
-		ndkProps.load(ndkSourcePropertiesFile.inputStream())
-	}
+	val ndkPropsFile = File(ndkDirectory, "source.properties")
+	if (!ndkPropsFile.exists())
+		throw GradleException("Specified ndkDirectory is not a valid NDK!")
 
+	val ndkProps = Properties().apply { load(ndkPropsFile.inputStream()) }
 	val ndkVersion = ndkProps.getProperty("Pkg.Revision", "0.0")
 	val ndkVersionMajor = ndkVersion.split(".").first().toInt()
 
