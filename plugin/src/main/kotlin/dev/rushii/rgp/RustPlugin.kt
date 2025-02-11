@@ -24,6 +24,12 @@ internal abstract class RustPlugin : Plugin<Project> {
 			description = "Build all targets for all Cargo projects"
 		}
 
+		// Obtain the Android NDK if any project has an Android target
+		val androidNdk = when (extension.cargoProjects.any { it.hasAndroidTargets() }) {
+			false -> null
+			true -> project.extensions.getAndroid().getNdkInfo()
+		}
+
 		for (cargoProject in extension.cargoProjects) {
 			cargoProject.targets.disallowChanges()
 
@@ -39,6 +45,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 				val buildTaskName = "cargoBuild-${cargoProject.name.get()}-${target}"
 				val buildTask = project.tasks.maybeCreate(buildTaskName, CargoBuildTask::class.java).apply {
 					this.cargoProject.set(cargoProject)
+					this.androidNdk.set(androidNdk)
 					this.target.set(target)
 				}
 

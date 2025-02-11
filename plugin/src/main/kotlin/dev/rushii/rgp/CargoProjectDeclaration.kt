@@ -97,17 +97,21 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	 * The configuration for the Android NDK to be used for this project.
 	 * This is only applicable for Android Cargo targets.
 	 */
-	public val android: Property<AndroidDeclaration> = project.objects
-		.property(AndroidDeclaration::class.java)
-		.convention(project.provider(::AndroidDeclaration))
+	public val android: AndroidDeclaration = AndroidDeclaration(project)
 
 	/**
 	 * Declare or configure the Android NDK to be used for this project.
 	 * This is only applicable for Android Cargo targets.
 	 */
-	public fun projects(block: AndroidDeclaration.() -> Unit) {
-		block(android.get())
+	public fun android(block: AndroidDeclaration.() -> Unit) {
+		block(android)
 	}
 
 	override fun getName(): String = name.get()
+
+	/**
+	 * Checks if any of the targets in this Cargo project are for Android.
+	 */
+	internal fun hasAndroidTargets(): Boolean =
+		targets.get().any { it.contains("android") }
 }

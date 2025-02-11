@@ -1,11 +1,13 @@
 package dev.rushii.rgp
 
+import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import dev.rushii.rgp.toolchains.AndroidToolchainInfo
 import dev.rushii.rgp.toolchains.ToolchainInfo
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
 import java.io.File
@@ -22,6 +24,13 @@ public abstract class CargoBuildTask : DefaultTask() {
 		group = RustPlugin.TASK_GROUP
 		description = "Builds a specific target for a Cargo project"
 	}
+
+	/**
+	 * The Android NDK to be used for this build, if this is an Android target.
+	 */
+	@get:Input
+	@get:Optional
+	public abstract val androidNdk: Property<AndroidNdkInfo>
 
 	/**
 	 * This specifies the Cargo project that will be built.

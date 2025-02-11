@@ -14,18 +14,19 @@ plugins {
 dependencies {
 	implementation(kotlin("stdlib"))
 	implementation(gradleApi())
+	compileOnly(libs.androidGradle)
 
 	testImplementation(libs.junit)
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_1_8
-	targetCompatibility = JavaVersion.VERSION_1_8
+	sourceCompatibility = JavaVersion.VERSION_11
+	targetCompatibility = JavaVersion.VERSION_11
 }
 
 tasks.withType<KotlinCompile> {
 	compilerOptions {
-		jvmTarget.set(JvmTarget.JVM_1_8)
+		jvmTarget.set(JvmTarget.JVM_11)
 
 		if (sourceSetName.get() == "main")
 			explicitApiMode.set(ExplicitApiMode.Strict)
