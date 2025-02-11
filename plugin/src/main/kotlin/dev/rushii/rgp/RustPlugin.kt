@@ -1,6 +1,5 @@
 package dev.rushii.rgp
 
-import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
@@ -19,23 +18,35 @@ internal abstract class RustPlugin : Plugin<Project> {
 	}
 
 	private fun registerBuildTasks(project: Project, extension: RustConfigExtension) {
-		val buildAllTask = project.tasks.maybeCreate("cargoBuildAll", DefaultTask::class.java).apply {
+		// Task to build all targets of all projects
+		val buildAllTask = project.tasks.maybeCreate("cargoBuildAll").apply {
 			group = TASK_GROUP
-			description = "Build all registered targets"
+			description = "Build all targets for all Cargo projects"
 		}
 
 		for (cargoProject in extension.cargoProjects) {
+			cargoProject.targets.disallowChanges()
+
+			// Task to build all targets of this specific project
+			val buildAllProjectTask = project.tasks.maybeCreate("cargoBuildAll-${cargoProject.name.get()}").apply {
+				group = TASK_GROUP
+				description = "Build all targets for the ${cargoProject.name.get()} Cargo project"
+			}
+
+			// Register build tasks for every target
 			for (target in cargoProject.targets.get()) {
-				val taskName = "cargoBuild-${cargoProject.name.get()}-${target}"
-				val buildTask = project.tasks.maybeCreate(taskName, CargoBuildTask::class.java).apply {
+				// Register a build task for this specific project+target
+				val buildTaskName = "cargoBuild-${cargoProject.name.get()}-${target}"
+				val buildTask = project.tasks.maybeCreate(buildTaskName, CargoBuildTask::class.java).apply {
 					this.cargoProject.set(cargoProject)
 					this.target.set(target)
 				}
 
+				// Link this individual build task to the combined build tasks
 				buildAllTask.dependsOn(buildTask)
+				buildAllProjectTask.dependsOn(buildTask)
 			}
-
-			cargoProject.targets.disallowChanges()
+		}
 		}
 	}
 
