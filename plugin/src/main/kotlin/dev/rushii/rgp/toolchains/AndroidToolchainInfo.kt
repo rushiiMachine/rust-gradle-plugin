@@ -25,11 +25,17 @@ internal class AndroidToolchainInfo(
 	 * The Android API level to compile for.
 	 */
 	val apiLevel: Int,
+
+	/**
+	 * The NDK this toolchain is based on.
+	 */
+	val ndk: AndroidNdkInfo,
 ) : ToolchainInfo {
-	internal constructor(cargoTarget: String, android: AndroidDeclaration) : this(
+	internal constructor(cargoTarget: String, android: AndroidDeclaration, ndk: AndroidNdkInfo) : this(
 		cargoTarget = cargoTarget,
 		isPrebuilt = android.usePrebuiltToolchain.get(),
 		apiLevel = android.apiLevel.get(),
+		ndk = ndk,
 	)
 
 	private val compilerTriple: String = when (cargoTarget) {
@@ -56,36 +62,32 @@ internal class AndroidToolchainInfo(
 
 	/**
 	 * Gets the path to the clang C compiler.
-	 * @param toolchainPath The host-specific NDK toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
 	 */
-	internal fun cc(toolchainPath: File): File {
+	internal fun cc(): File {
 		val basePath = when (isPrebuilt) {
 			true -> "/bin/$compilerTriple$apiLevel-clang"
 			false -> "/$cargoTarget-$apiLevel/bin/$compilerTriple-clang"
 		}
 
-		return File(toolchainPath, if (Os.isFamily(Os.FAMILY_WINDOWS)) "$basePath.cmd" else basePath)
+		return File(getLLVMToolchainPath(), withWindowsExtension(basePath, "cmd"))
 	}
 
 	/**
 	 * Gets the path to the clang C++ compiler.
-	 * @param toolchainPath The host-specific NDK toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
 	 */
-	internal fun cxx(toolchainPath: File): File {
+	internal fun cxx(): File {
 		val basePath = when (isPrebuilt) {
 			true -> "/bin/$compilerTriple$apiLevel-clang++"
 			false -> "/$cargoTarget-$apiLevel/bin/$compilerTriple-clang++"
 		}
 
-		return File(toolchainPath, if (Os.isFamily(Os.FAMILY_WINDOWS)) "$basePath.cmd" else basePath)
+		return File(getLLVMToolchainPath(), withWindowsExtension(basePath, "cmd"))
 	}
 
 	/**
 	 * Gets the path to llvm-ar.
-	 * @param toolchainPath The host-specific NDK toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
-	 * @param ndk The Android NDK this toolchain info represents.
 	 */
-	internal fun ar(toolchainPath: File, ndk: AndroidNdkInfo): File {
+	internal fun ar(): File {
 		val basePath = if (ndk.versionMajor >= 23) {
 			"/bin/llvm-ar"
 		} else when (isPrebuilt) {
@@ -93,16 +95,55 @@ internal class AndroidToolchainInfo(
 			false -> "/$cargoTarget-$apiLevel/bin/$binutilsTriple-ar"
 		}
 
-		return File(toolchainPath, if (Os.isFamily(Os.FAMILY_WINDOWS)) "$basePath.exe" else basePath)
+		return File(getLLVMToolchainPath(), withWindowsExtension(basePath, "exe"))
 	}
 
 	/**
-	 * Gets the path to a python executable.
-	 * @param toolchainPath The host-specific NDK toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
+	 * Gets the path to a python executable shipped with the NDK.
 	 */
-	internal fun python(toolchainPath: File): File {
-		val basePath = "/python3/python"
+	internal fun python(): File {
+		val pythonExe = withWindowsExtension("python", "exe")
 
-		return File(toolchainPath, if (Os.isFamily(Os.FAMILY_WINDOWS)) "$basePath.exe" else basePath)
+		return if (ndk.versionMajor >= 25) {
+			File(getLLVMToolchainPath(), "/python3/$pythonExe")
+		} else {
+			File(ndk.path, "/prebuilt/${getHostTag()}/bin/$pythonExe")
+		}
+	}
+
+	/**
+	 * Returns the host platform-specific NDK LLVM toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
+	 */
+	private fun getLLVMToolchainPath(): File {
+		return when (isPrebuilt) {
+			false -> TODO("path for generated toolchain")
+			true -> File(ndk.path, "/toolchains/llvm/prebuilt/${getHostTag()}")
+		}
+	}
+
+	/**
+	 * Returns the platform name of the prebuilt toolchain based on the current host platform.
+	 */
+	private fun getHostTag(): String {
+		// Based on:
+		// https://cs.android.com/android/kernel/superproject/+/common-android-mainline:prebuilts/ndk-r26/build/tools/ndk_bin_common.sh
+		// https://stackoverflow.com/q/10846105/13964629
+
+		val arch = when (val rawArch = System.getProperty("os.arch")) {
+			"arm64" -> "arm64"
+			"x86_64", "amd64" -> "x86_64"
+			"x86", "i386", "i486", "i586", "i686" -> "x86"
+			else -> throw IllegalStateException("Unsupported host architecture $rawArch")
+		}
+
+		return when {
+			Os.isFamily(Os.FAMILY_WINDOWS) -> "windows-$arch"
+			Os.isFamily(Os.FAMILY_MAC) -> "darwin-x86_64"
+			else -> "linux-$arch"
+		}
+	}
+
+	private fun withWindowsExtension(original: String, windowsExt: String): String {
+		return if (Os.isFamily(Os.FAMILY_WINDOWS)) "$original.$windowsExt" else original
 	}
 }

@@ -15,11 +15,12 @@ internal interface ToolchainInfo {
 		 * @param android The Android config to be used for a specific project (required only for Android targets).
 		 * 				  This config should be fully configured, meaning initializing [ToolchainInfo] should not be done at configuration time.
 		 */
-		fun getForCargoTarget(targetName: String, android: AndroidDeclaration? = null): ToolchainInfo {
+		fun getForCargoTarget(targetName: String, android: AndroidDeclaration? = null, ndkInfo: AndroidNdkInfo? = null): ToolchainInfo {
 			// Likely requires the Android NDK for compilation.
 			if (targetName.contains("android")) {
-				val androidConfig = android ?: throw IllegalArgumentException("Android config null for an Android target")
-				return AndroidToolchainInfo(targetName, androidConfig)
+				val androidConfig = android ?: throw IllegalArgumentException("Android config required for an Android target")
+				val ndk = ndkInfo ?: throw IllegalArgumentException("NDK info required for an Android target")
+				return AndroidToolchainInfo(targetName, androidConfig, ndk)
 			}
 
 			// Unknown, assumed will build correctly

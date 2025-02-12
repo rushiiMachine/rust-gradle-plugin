@@ -3,7 +3,6 @@ package dev.rushii.rgp
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import dev.rushii.rgp.toolchains.AndroidToolchainInfo
 import dev.rushii.rgp.toolchains.ToolchainInfo
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
@@ -60,7 +59,11 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Property retrieval ------------ //
 
 		val cargoProject = cargoProject.get()
-		val toolchainInfo = ToolchainInfo.getForCargoTarget(targetName = target.get(), android = cargoProject.android)
+		val toolchainInfo = ToolchainInfo.getForCargoTarget(
+			targetName = target.get(),
+			android = cargoProject.android,
+			ndkInfo = androidNdk.get(),
+		)
 
 		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainInfo.cargoTarget}")
 
@@ -108,32 +111,22 @@ public abstract class CargoBuildTask : DefaultTask() {
 		if (toolchainInfo is AndroidToolchainInfo) {
 			val ndk = androidNdk.get()
 
-			val toolchainPath = when (toolchainInfo.isPrebuilt) {
-				false -> TODO("path for generated toolchain")
-				true -> {
-					val hostTag = when {
-						Os.isFamily(Os.FAMILY_WINDOWS) && Os.isArch("x86_64") -> "windows-x86_64"
-						Os.isFamily(Os.FAMILY_WINDOWS) -> "windows"
-						Os.isFamily(Os.FAMILY_MAC) -> "darwin-x86_64"
-						else -> "linux-x86_64"
-					}
-					File(ndk.path, "/toolchains/llvm/prebuilt/$hostTag")
-				}
-			}
+			// FIXME non-null assertion
+			cargoEnvVars["RUSTFLAGS"] = "-C linker=${toolchainInfo.cc()} -C link-arg=-Wl,-soname,lib${libName!!}.so"
 
 			if (toolchainInfo.isPrebuilt)
 				cargoEnvVars["CARGO_NDK_MAJOR_VERSION"] = ndk.versionMajor
 
 			// For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
 			// https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
-			cargoEnvVars["CC_${target}"] = toolchainInfo.cc(toolchainPath)
-			cargoEnvVars["CXX_${target}"] = toolchainInfo.cxx(toolchainPath)
-			cargoEnvVars["AR_${target}"] = toolchainInfo.ar(toolchainPath, ndk)
+			cargoEnvVars["CC_${target}"] = toolchainInfo.cc()
+			cargoEnvVars["CXX_${target}"] = toolchainInfo.cxx()
+			cargoEnvVars["AR_${target}"] = toolchainInfo.ar()
 
 			// Set CLANG_PATH in the environment, so that bindgen (or anything
 			// else using clang-sys in a build.rs) works properly, and doesn't
 			// use host headers and such.
-			cargoEnvVars["CLANG_PATH"] = toolchainInfo.cc(toolchainPath)
+			cargoEnvVars["CLANG_PATH"] = toolchainInfo.cc()
 		}
 
 		cargoEnvVars.putAll(extraEnvVars)
