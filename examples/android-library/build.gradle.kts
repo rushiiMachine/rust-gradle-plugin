@@ -1,7 +1,7 @@
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 
 plugins {
-	alias(libs.plugins.android.application)
+	alias(libs.plugins.android.library)
 	alias(libs.plugins.kotlin.android)
 	id("dev.rushii.rust-gradle-plugin")
 }
@@ -17,11 +17,8 @@ android {
 
 	defaultConfig {
 		minSdk = 21
-		targetSdk = 35
-		versionCode = 1
-		versionName = "0.0.1"
 
-		proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+		consumerProguardFiles("consumer-rules.pro")
 	}
 
 	kotlinOptions {
@@ -29,6 +26,10 @@ android {
 	}
 
 	ndkVersion = sdkDirectory.resolve("ndk").listFilesOrdered().last().name
+}
+
+kotlin {
+	explicitApi()
 }
 
 rust {
@@ -46,3 +47,5 @@ rust {
 tasks.maybeCreate("clean", Delete::class.java).apply {
 	delete("./src/main/rust/target")
 }
+
+// TODO: publishing setup

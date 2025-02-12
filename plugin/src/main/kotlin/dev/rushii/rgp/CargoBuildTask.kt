@@ -62,7 +62,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 		val toolchainInfo = ToolchainInfo.getForCargoTarget(
 			targetName = target.get(),
 			android = cargoProject.android,
-			ndkInfo = androidNdk.get(),
+			ndkInfo = androidNdk.orNull,
 		)
 
 		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainInfo.cargoTarget}")

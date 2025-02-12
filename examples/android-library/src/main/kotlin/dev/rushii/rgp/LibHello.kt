@@ -1,6 +1,6 @@
 package dev.rushii.libhello
 
-class LibHello {
+public class LibHello {
 	/**
 	 * Invokes the native method through JNI to return `Hello ${name}!`
 	 */
@@ -8,7 +8,8 @@ class LibHello {
 
 	private companion object {
 		init {
-			// This loads the native library from the APK's bundled JNI libs
+			// The native library is bundled into the .aar artifact that is included when publishing,
+			// which is then merged into APKs that depend on this library, and loaded from there.
 			System.loadLibrary("hello")
 		}
 	}
