@@ -10,7 +10,7 @@ public class AndroidDeclaration(project: Project) {
 	/**
 	 * Whether to use only toolchains that have a prebuilt variant shipped with the NDK.
 	 * If this is false, then `make_standalone_toolchain.py` is invoked to **quickly** generate
-	 * a toolchain with the specified [apiLevel] and all targets of the project into [customToolchainDirectory].
+	 * a toolchain with the specified [apiLevel] and all targets of the project into a temporary build directory.
 	 *
 	 * This can only be used if the specified NDK's version is at least v19.
 	 *

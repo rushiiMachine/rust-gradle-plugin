@@ -3,6 +3,7 @@ package dev.rushii.rgp.toolchains
 import dev.rushii.rgp.AndroidDeclaration
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.File
+import kotlin.math.min
 
 /**
  * This toolchain info brings the assumption that building will succeed,
@@ -23,9 +24,10 @@ internal class AndroidToolchainInfo(
 	val isPrebuilt: Boolean,
 
 	/**
-	 * The Android API level to compile for.
+	 * The Android API level this toolchain was initially configured to compile for.
+	 * This does not have the fixes applied by the getter [apiLevel].
 	 */
-	val apiLevel: Int,
+	val configuredApiLevel: Int,
 
 	/**
 	 * The NDK this toolchain is based on.
@@ -35,7 +37,7 @@ internal class AndroidToolchainInfo(
 	internal constructor(cargoTarget: String, android: AndroidDeclaration, ndk: AndroidNdkInfo) : this(
 		cargoTarget = cargoTarget,
 		isPrebuilt = android.usePrebuiltToolchain.get(),
-		apiLevel = android.apiLevel.get(),
+		configuredApiLevel = android.apiLevel.get(),
 		ndk = ndk,
 	)
 
@@ -48,6 +50,7 @@ internal class AndroidToolchainInfo(
 		"aarch64-linux-android" -> "aarch64-linux-android"
 		"i686-linux-android" -> "i686-linux-android"
 		"x86_64-linux-android" -> "x86_64-linux-android"
+		"riscv64-linux-android" -> "riscv64-linux-android"
 		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
 	}
 
@@ -56,15 +59,34 @@ internal class AndroidToolchainInfo(
 		"aarch64-linux-android" -> "aarch64-linux-android"
 		"i686-linux-android" -> "i686-linux-android"
 		"x86_64-linux-android" -> "x86_64-linux-android"
+		"riscv64-linux-android" -> "UNUSED"
 		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
 	}
 
-	// The non-prebuilt paths are based on the paths the used by the generateToolchains task
+	val targetArch: String = when (cargoTarget) {
+		"arm-linux-androideabi", "armv7-linux-androideabi", "thumbv7neon-linux-androideabi" -> "arm"
+		"aarch64-linux-android" -> "arm64"
+		"i686-linux-android" -> "x86"
+		"x86_64-linux-android" -> "x86_64"
+		"riscv64-linux-android" -> "riscv64"
+		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
+	}
+
+	val apiLevel: Int
+		get() = when {
+			// riscv64 is only available starting with API 35
+			targetArch == "riscv64" -> min(35, configuredApiLevel)
+
+			// Cannot build for 65-bit targeting below API 21
+			targetArch.contains("64") -> min(21, configuredApiLevel)
+
+			else -> configuredApiLevel
+		}
 
 	/**
 	 * Gets the path to the clang C compiler.
 	 */
-	internal fun cc(): File {
+	fun cc(): File {
 		val basePath = when (isPrebuilt) {
 			true -> "/bin/$compilerTriple$apiLevel-clang"
 			false -> "/$cargoTarget-$apiLevel/bin/$compilerTriple-clang"
@@ -76,7 +98,7 @@ internal class AndroidToolchainInfo(
 	/**
 	 * Gets the path to the clang C++ compiler.
 	 */
-	internal fun cxx(): File {
+	fun cxx(): File {
 		val basePath = when (isPrebuilt) {
 			true -> "/bin/$compilerTriple$apiLevel-clang++"
 			false -> "/$cargoTarget-$apiLevel/bin/$compilerTriple-clang++"
@@ -88,7 +110,7 @@ internal class AndroidToolchainInfo(
 	/**
 	 * Gets the path to llvm-ar.
 	 */
-	internal fun ar(): File {
+	fun ar(): File {
 		val basePath = if (ndk.versionMajor >= 23) {
 			"/bin/llvm-ar"
 		} else when (isPrebuilt) {
@@ -102,7 +124,7 @@ internal class AndroidToolchainInfo(
 	/**
 	 * Gets the path to a python executable shipped with the NDK.
 	 */
-	internal fun python(): File {
+	fun python(): File {
 		val pythonExe = withWindowsExtension("python", "exe")
 
 		return if (ndk.versionMajor >= 25) {
