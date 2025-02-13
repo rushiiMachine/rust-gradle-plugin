@@ -25,6 +25,7 @@ kotlin {
 
 application {
 	mainClass.set("dev.rushii.libhello.Main")
+	// TODO: compile for default target & allow acquiring it?
 	applicationDefaultJvmArgs = listOf("-Djava.library.path=./build/rustLibs/x86_64-pc-windows-msvc")
 }
 

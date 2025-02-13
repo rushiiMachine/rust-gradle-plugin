@@ -18,7 +18,6 @@ import javax.inject.Inject
  * Task that builds a Cargo project for a single target, with the config
  * specified by a [CargoProjectDeclaration], and a target.
  */
-// TODO: @CacheableTask
 public abstract class CargoBuildTask : DefaultTask() {
 	init {
 		group = RustPlugin.TASK_GROUP
@@ -45,14 +44,17 @@ public abstract class CargoBuildTask : DefaultTask() {
 	public abstract val target: Property<String>
 
 	// All inputs must be cached outside the task action (using Task.project accessor is disallowed)
+
 	@get:Inject
 	internal abstract val execOperations: ExecOperations
 
 	@get:Inject
 	internal abstract val fsOperations: FileSystemOperations
 
-	private val gradleProjectDir = project.projectDir
-	private val outputDir = target.map { project.layout.buildDirectory.get().dir("rustLibs").dir(it) }
+	@Suppress("LeakingThis")
+	private val outputDir = this.target.map { this.project.layout.buildDirectory.get().dir("rustLibs").dir(it) }
+	private val gradleProjectDir = this.project.projectDir
+	private val gradleProjectNamePath = this.project.path
 
 	@TaskAction
 	internal fun run() {
@@ -65,7 +67,11 @@ public abstract class CargoBuildTask : DefaultTask() {
 			ndkInfo = androidNdk.orNull,
 		)
 
-		logger.lifecycle("Building cargo project ${cargoProject.name.get()} for target ${toolchainInfo.cargoTarget}")
+		logger.lifecycle(
+			"Building Cargo project ${cargoProject.name.get()}" +
+					" for target ${toolchainInfo.cargoTarget}" +
+					" for project $gradleProjectNamePath",
+		)
 
 		val projectPathRaw = cargoProject.projectPath.get()
 		val cargoExe = cargoProject.cargoExecutable.get()
@@ -109,13 +115,13 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		// Configure Android compilation
 		if (toolchainInfo is AndroidToolchainInfo) {
-			val ndk = androidNdk.get()
-
+			// TODO: linker wrapper?
 			// FIXME non-null assertion
 			cargoEnvVars["RUSTFLAGS"] = "-C linker=${toolchainInfo.cc()} -C link-arg=-Wl,-soname,lib${libName!!}.so"
 
+			// TODO: what is this used for? linker wrapper?
 			if (toolchainInfo.isPrebuilt)
-				cargoEnvVars["CARGO_NDK_MAJOR_VERSION"] = ndk.versionMajor
+				cargoEnvVars["CARGO_NDK_MAJOR_VERSION"] = toolchainInfo.ndk.versionMajor
 
 			// For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
 			// https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
@@ -135,6 +141,9 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		if (!File(projectPath, "Cargo.toml").exists())
 			throw FileNotFoundException("Supplied projectPath does not contain a Cargo.toml")
+
+		if (toolchainInfo is AndroidToolchainInfo && !toolchainInfo.getLLVMToolchainPath().exists())
+			throw FileNotFoundException("Failed to locate a prebuilt LLVM toolchain in the Android NDK")
 
 		// ------------ Cargo Execution ------------ //
 

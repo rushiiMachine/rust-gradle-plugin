@@ -18,6 +18,7 @@ internal class AndroidToolchainInfo(
 
 	/**
 	 * Whether this toolchain is a prebuilt variant that shipped with the NDK.
+	 * See [AndroidDeclaration.usePrebuiltToolchain] for more info.
 	 */
 	val isPrebuilt: Boolean,
 
@@ -114,7 +115,7 @@ internal class AndroidToolchainInfo(
 	/**
 	 * Returns the host platform-specific NDK LLVM toolchain directory. (ie, `/toolchains/llvm/windows-x86_64/`)
 	 */
-	private fun getLLVMToolchainPath(): File {
+	fun getLLVMToolchainPath(): File {
 		return when (isPrebuilt) {
 			false -> TODO("path for generated toolchain")
 			true -> File(ndk.path, "/toolchains/llvm/prebuilt/${getHostTag()}")
@@ -143,6 +144,9 @@ internal class AndroidToolchainInfo(
 		}
 	}
 
+	/**
+	 * Appends a file extension to a string if the host platform is Windows.
+	 */
 	private fun withWindowsExtension(original: String, windowsExt: String): String {
 		return if (Os.isFamily(Os.FAMILY_WINDOWS)) "$original.$windowsExt" else original
 	}
