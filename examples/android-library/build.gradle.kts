@@ -37,8 +37,13 @@ rust {
 		create("libhello") {
 			projectPath.set("./src/main/rust")
 			libName.set("hello")
-			profile.set("release")
 			targets.addAll("armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android")
+
+			// Set Cargo profile to release if any Gradle release task in going to be run
+			gradle.taskGraph.whenReady {
+				if (allTasks.any { it.name.contains("release") })
+					this@create.profile.set("release")
+			}
 		}
 	}
 }

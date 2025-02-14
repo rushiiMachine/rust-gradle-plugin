@@ -69,11 +69,11 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	/**
 	 * Name of the profile to pass to Cargo through `--profile=...`.
 	 *
-	 * By default, this is `debug`.
+	 * By default, this is `dev`.
 	 */
 	public val profile: Property<String> = project.objects
 		.property(String::class.java)
-		.convention("debug")
+		.convention("dev")
 
 	/**
 	 * Optional extra arguments to pass to Cargo when running a build for a target.
