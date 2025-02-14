@@ -43,9 +43,4 @@ rust {
 	}
 }
 
-// Delete Cargo build dir when running clean from Gradle
-tasks.maybeCreate("clean", Delete::class.java).apply {
-	delete("./src/main/rust/target")
-}
-
 // TODO: publishing setup

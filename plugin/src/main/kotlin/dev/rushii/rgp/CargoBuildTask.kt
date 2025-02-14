@@ -73,7 +73,6 @@ public abstract class CargoBuildTask : DefaultTask() {
 					" for project $gradleProjectNamePath",
 		)
 
-		val projectPathRaw = cargoProject.projectPath.get()
 		val cargoExe = cargoProject.cargoExecutable.get()
 		val extraArguments = cargoProject.cargoArguments.get()
 		val extraEnvVars = cargoProject.cargoEnvironmentVariables.get()
@@ -85,10 +84,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Setup ------------ //
 
 		// Obtain resolved cargo project path
-		val projectPath = when (File(projectPathRaw).isAbsolute) {
-			true -> File(projectPathRaw)
-			else -> File(gradleProjectDir, projectPathRaw)
-		}
+		val projectPath = cargoProject.absoluteProjectPath.get()
 
 		// Make a list of all files to copy from the Cargo target build dir
 		val buildIncludes = when {

@@ -3,6 +3,7 @@ package dev.rushii.rgp
 import org.gradle.api.Named
 import org.gradle.api.Project
 import org.gradle.api.provider.*
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -59,7 +60,9 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 		.convention("cargo")
 
 	/**
-	 * The path to the directory where a Cargo project exists
+	 * The path to the directory where a Cargo project exists.
+	 *
+	 * This can be either an absolute path or relative to the current Gradle project directory.
 	 */
 	public val projectPath: Property<String> = project.objects.property(String::class.java)
 
@@ -114,4 +117,14 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	 */
 	internal fun hasAndroidTargets(): Boolean =
 		targets.get().any { it.contains("android") }
+
+	/**
+	 * The resolved absolute path of the Cargo project.
+	 */
+	internal val absoluteProjectPath = this.projectPath.map { rawPath ->
+		when (File(rawPath).isAbsolute) {
+			true -> File(rawPath)
+			else -> File(project.path, rawPath)
+		}
+	}
 }

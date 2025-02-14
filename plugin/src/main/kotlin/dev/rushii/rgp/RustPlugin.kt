@@ -4,6 +4,7 @@ import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.Delete
 
 @Suppress("UnnecessaryAbstractClass")
 internal abstract class RustPlugin : Plugin<Project> {
@@ -86,6 +87,11 @@ internal abstract class RustPlugin : Plugin<Project> {
 		}
 
 		for (cargoProject in extension.cargoProjects) {
+			// Delete Cargo build dir when running project clean
+			project.tasks.maybeCreate("clean", Delete::class.java).apply {
+				delete(cargoProject.absoluteProjectPath.get().resolve("target"))
+			}
+
 			// Task to build all targets of this specific project
 			val buildAllProjectTask = project.tasks.maybeCreate("cargoBuildAll-${cargoProject.name.get()}").apply {
 				group = TASK_GROUP
