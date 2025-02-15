@@ -3,6 +3,7 @@ package dev.rushii.rgp
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import dev.rushii.rgp.toolchains.AndroidToolchainInfo
 import dev.rushii.rgp.toolchains.ToolchainInfo
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
@@ -12,6 +13,7 @@ import org.gradle.api.tasks.TaskAction
 import org.gradle.process.ExecOperations
 import java.io.File
 import java.io.FileNotFoundException
+import java.util.*
 import javax.inject.Inject
 
 /**
@@ -54,6 +56,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 	@Suppress("LeakingThis")
 	private val outputDir = this.target.map { this.project.layout.buildDirectory.get().dir("rustLibs").dir(it) }
 	private val customToolchainsDir = this.project.layout.buildDirectory.dir("generatedToolchains")
+	private val gradleProjectBuildDir = this.project.layout.buildDirectory
 	private val gradleProjectNamePath = this.project.path
 
 	@TaskAction
@@ -112,24 +115,32 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		// Configure Android compilation
 		if (toolchainInfo is AndroidToolchainInfo) {
-			// TODO: linker wrapper?
-			// FIXME non-null assertion
-			cargoEnvVars["RUSTFLAGS"] = "-C linker=${toolchainInfo.cc()} -C link-arg=-Wl,-soname,lib${libName!!}.so"
-
-			// TODO: what is this used for? linker wrapper?
-			if (toolchainInfo.isPrebuilt)
-				cargoEnvVars["CARGO_NDK_MAJOR_VERSION"] = toolchainInfo.ndk.versionMajor
-
 			// For build.rs in `cc` consumers: like "CC_i686-linux-android".  See
 			// https://github.com/alexcrichton/cc-rs#external-configuration-via-environment-variables.
-			cargoEnvVars["CC_${target}"] = toolchainInfo.cc()
-			cargoEnvVars["CXX_${target}"] = toolchainInfo.cxx()
-			cargoEnvVars["AR_${target}"] = toolchainInfo.ar()
+			cargoEnvVars["CC_${target}"] = toolchainInfo.cc().absolutePath
+			cargoEnvVars["CXX_${target}"] = toolchainInfo.cxx().absolutePath
+			cargoEnvVars["AR_${target}"] = toolchainInfo.ar().absolutePath
 
 			// Set CLANG_PATH in the environment, so that bindgen (or anything
 			// else using clang-sys in a build.rs) works properly, and doesn't
 			// use host headers and such.
-			cargoEnvVars["CLANG_PATH"] = toolchainInfo.cc()
+			cargoEnvVars["CLANG_PATH"] = toolchainInfo.cc().absolutePath
+
+			// Configure the linker wrapper to pass to Cargo later
+			// This wraps linker calls by Cargo and fixes issues with Cargo workspaces and older NDK versions
+			val linkerWrapperFileExtension = if (Os.isFamily(Os.FAMILY_WINDOWS)) "bat" else "sh"
+			val linkerWrapperPlatformFile = gradleProjectBuildDir.get().asFile
+				.resolve("android-linker-wrapper/android-linker-wrapper.$linkerWrapperFileExtension")
+
+			cargoEnvVars["RGP_PYTHON_CMD"] = toolchainInfo.python().absolutePath
+			cargoEnvVars["RGP_LINKER_WRAPPER"] = linkerWrapperPlatformFile.resolveSibling("android-linker-wrapper.py").absolutePath
+			cargoEnvVars["RGP_CC"] = toolchainInfo.cc().absolutePath
+			cargoEnvVars["RGP_CC_LINK_ARGS"] = "-Wl,--build-id,-soname,lib${libName!!}.so" // FIXME non-null assertion
+			cargoEnvVars["RGP_NDK_MAJOR_VERSION"] = toolchainInfo.ndk.versionMajor
+
+			// Make Cargo invoke our platform-specific linker wrapper script
+			val cargoEnvTargetName = toolchainInfo.cargoTarget.uppercase(Locale.ROOT).replace('-', '_')
+			cargoEnvVars["CARGO_TARGET_${cargoEnvTargetName}_LINKER"] = linkerWrapperPlatformFile
 		}
 
 		cargoEnvVars.putAll(extraEnvVars)
@@ -154,7 +165,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		// ------------ Artifact copying ------------ //
 
-		fsOperations.copy { spec ->
+		fsOperations.sync { spec ->
 			spec.from(projectPath.resolve("target/$target/$profile"))
 			spec.into(outputDir)
 			spec.include(buildIncludes)

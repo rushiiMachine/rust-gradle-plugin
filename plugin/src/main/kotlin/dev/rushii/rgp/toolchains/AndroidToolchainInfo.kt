@@ -138,6 +138,7 @@ internal class AndroidToolchainInfo(
 
 	/**
 	 * Gets the path to a python executable shipped with the NDK.
+	 * This can be either Python 2 or Python 3 depending on the NDK version.
 	 */
 	fun python(): File {
 		val pythonExe = withWindowsExtension("python", "exe")

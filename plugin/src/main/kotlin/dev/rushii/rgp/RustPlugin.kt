@@ -96,6 +96,12 @@ internal abstract class RustPlugin : Plugin<Project> {
 			}
 		}
 
+		// Register a task that extracts the Android linker wrapper scripts to be passed to Cargo
+		val generateAndroidLinkerWrapperTask = when (extension.cargoProjects.any { it.hasAndroidTargets() }) {
+			false -> null
+			true -> project.tasks.maybeCreate("generateAndroidLinkerWrapper", GenerateAndroidLinkerWrapperTask::class.java)
+		}
+
 		for (cargoProject in extension.cargoProjects) {
 			// Delete Cargo build dir when running project clean
 			project.tasks.maybeCreate("clean", Delete::class.java).apply {
@@ -122,9 +128,12 @@ internal abstract class RustPlugin : Plugin<Project> {
 				buildAllTask.dependsOn(buildTask)
 				buildAllProjectTask.dependsOn(buildTask)
 
-				// Make sure toolchains are generated for all tasks of projects that don't use prebuilt Android toolchains
-				if (cargoProject.hasAndroidTargets() && !cargoProject.android.usePrebuiltToolchain.get()) {
-					buildTask.dependsOn(generateAndroidToolchainsTask)
+				if (cargoProject.hasAndroidTargets()) {
+					buildTask.dependsOn(generateAndroidLinkerWrapperTask)
+
+					// Make sure toolchains are generated for all tasks of projects that don't use prebuilt Android toolchains
+					if (!cargoProject.android.usePrebuiltToolchain.get())
+						buildTask.dependsOn(generateAndroidToolchainsTask)
 				}
 			}
 		}
