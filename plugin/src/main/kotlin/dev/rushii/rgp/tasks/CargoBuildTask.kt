@@ -63,8 +63,15 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Property retrieval ------------ //
 
 		val cargoProject = cargoProject.get()
+		val cargoExe = cargoProject.cargoExecutable.get()
+		val extraArguments = cargoProject.cargoArguments.get()
+		val extraEnvVars = cargoProject.cargoEnvironmentVariables.get()
+		val profile = cargoProject.profile.get()
+		val target = target.get()
+		val libName = cargoProject.libName.orNull
+		val extraIncludes = cargoProject.extraIncludes.get()
 		val toolchainInfo = ToolchainInfo.getForCargoTarget(
-			targetName = target.get(),
+			targetName = target,
 			android = cargoProject.android,
 			androidNdkInfo = androidNdk.orNull,
 			androidCustomToolchainsDir = customToolchainsDir.get().asFile,
@@ -73,16 +80,9 @@ public abstract class CargoBuildTask : DefaultTask() {
 		logger.lifecycle(
 			"Building Cargo project ${cargoProject.name.get()}" +
 					" for target ${toolchainInfo.cargoTarget}" +
-					" for project $gradleProjectNamePath",
+					" for project $gradleProjectNamePath"
+					+ "with profile $profile",
 		)
-
-		val cargoExe = cargoProject.cargoExecutable.get()
-		val extraArguments = cargoProject.cargoArguments.get()
-		val extraEnvVars = cargoProject.cargoEnvironmentVariables.get()
-		val profile = cargoProject.profile.get()
-		val target = target.get()
-		val libName = cargoProject.libName.orNull
-		val extraIncludes = cargoProject.extraIncludes.get()
 
 		// ------------ Setup ------------ //
 
@@ -165,7 +165,13 @@ public abstract class CargoBuildTask : DefaultTask() {
 		// ------------ Artifact copying ------------ //
 
 		fsOperations.sync { spec ->
-			spec.from(projectPath.resolve("target/$target/$profile"))
+			// Cargo uses `dev` to represent the `debug` profile internally
+			val fixedProfile = when (profile) {
+				"dev" -> "debug"
+				else -> profile
+			}
+
+			spec.from(projectPath.resolve("target/$target/$fixedProfile"))
 			spec.into(outputDir)
 			spec.include(buildIncludes)
 		}

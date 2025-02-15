@@ -109,33 +109,46 @@ internal abstract class RustPlugin : Plugin<Project> {
 			}
 
 			// Task to build all targets of this specific project
-			val buildAllProjectTask = project.tasks.maybeCreate("cargoBuildAll-${cargoProject.name.get()}").apply {
-				group = TASK_GROUP
-				description = "Build all targets for the ${cargoProject.name.get()} Cargo project"
+			val buildAllProjectTask = project.tasks.register("cargoBuildAll-${cargoProject.name.get()}") { task ->
+				task.group = TASK_GROUP
+				task.description = "Build all targets for the ${cargoProject.name.get()} Cargo project"
 			}
 
 			// Register build tasks for every target
 			for (target in cargoProject.targets.get()) {
 				// Register a build task for this specific project+target
 				val buildTaskName = "cargoBuild-${cargoProject.name.get()}-${target}"
-				val buildTask = project.tasks.maybeCreate(buildTaskName, CargoBuildTask::class.java).apply {
-					this.cargoProject.set(cargoProject)
-					this.androidNdk.set(androidNdk)
-					this.target.set(target)
+				val buildTask = project.tasks.register(buildTaskName, CargoBuildTask::class.java) { task ->
+					task.cargoProject.set(cargoProject)
+					task.androidNdk.set(androidNdk)
+					task.target.set(target)
 				}
 
 				// Link this individual build task to the combined build tasks
 				buildAllTask.dependsOn(buildTask)
-				buildAllProjectTask.dependsOn(buildTask)
+				buildAllProjectTask.get().dependsOn(buildTask)
 
 				if (cargoProject.hasAndroidTargets()) {
-					buildTask.dependsOn(generateAndroidLinkerWrapperTask)
+					buildTask.get().dependsOn(generateAndroidLinkerWrapperTask)
 
 					// Make sure toolchains are generated for all tasks of projects that don't use prebuilt Android toolchains
 					if (!cargoProject.android.usePrebuiltToolchain.get())
-						buildTask.dependsOn(generateAndroidToolchainsTask)
+						buildTask.get().dependsOn(generateAndroidToolchainsTask)
 				}
 			}
+		}
+
+		// If this is an Android project, make sure AGP bundles our libs as JNI libs
+		if (androidNdk != null) {
+			val copyArtifactsTask = project.tasks.maybeCreate("copyRustAndroidArtifacts", CopyAndroidArtifactsTask::class.java)
+
+			project.extensions.getAndroid()
+				.sourceSets.getByName("main")
+				.jniLibs.srcDir(copyArtifactsTask.outputs.files.singleFile)
+
+			// TODO: is there a more reliable way to obtain all of these?
+			for (name in arrayOf("mergeDebugJniLibFolders", "mergeReleaseJniLibFolders"))
+				project.tasks.getByName(name).dependsOn(copyArtifactsTask)
 		}
 	}
 
