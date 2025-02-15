@@ -9,7 +9,7 @@ import org.gradle.api.tasks.Delete
 @Suppress("UnnecessaryAbstractClass")
 internal abstract class RustPlugin : Plugin<Project> {
 	override fun apply(project: Project) {
-		val extension = project.extensions.create("rust", RustConfigExtension::class.java, project)
+		val extension = project.extensions.create(EXTENSION_NAME, RustConfigExtension::class.java, project)
 
 		// Wait until extension has been configured
 		project.afterEvaluate {
@@ -86,6 +86,16 @@ internal abstract class RustPlugin : Plugin<Project> {
 			description = "Build all targets for all Cargo projects"
 		}
 
+		// Register a task to generate toolchains if any project doesn't use prebuilt Android toolchains
+		val shouldMakeGenTask = extension.cargoProjects
+			.any { it.hasAndroidTargets() && !it.android.usePrebuiltToolchain.get() }
+		val generateAndroidToolchainsTask = when (shouldMakeGenTask) {
+			false -> null
+			true -> project.tasks.maybeCreate("generateAndroidToolchains", GenerateAndroidToolchainsTask::class.java).apply {
+				this.androidNdk.set(androidNdk)
+			}
+		}
+
 		for (cargoProject in extension.cargoProjects) {
 			// Delete Cargo build dir when running project clean
 			project.tasks.maybeCreate("clean", Delete::class.java).apply {
@@ -111,11 +121,17 @@ internal abstract class RustPlugin : Plugin<Project> {
 				// Link this individual build task to the combined build tasks
 				buildAllTask.dependsOn(buildTask)
 				buildAllProjectTask.dependsOn(buildTask)
+
+				// Make sure toolchains are generated for all tasks of projects that don't use prebuilt Android toolchains
+				if (cargoProject.hasAndroidTargets() && !cargoProject.android.usePrebuiltToolchain.get()) {
+					buildTask.dependsOn(generateAndroidToolchainsTask)
+				}
 			}
 		}
 	}
 
 	internal companion object {
+		const val EXTENSION_NAME = "rust"
 		const val TASK_GROUP = "rust"
 	}
 }

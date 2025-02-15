@@ -53,7 +53,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 	@Suppress("LeakingThis")
 	private val outputDir = this.target.map { this.project.layout.buildDirectory.get().dir("rustLibs").dir(it) }
-	private val gradleProjectDir = this.project.projectDir
+	private val customToolchainsDir = this.project.layout.buildDirectory.dir("generatedToolchains")
 	private val gradleProjectNamePath = this.project.path
 
 	@TaskAction
@@ -64,7 +64,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 		val toolchainInfo = ToolchainInfo.getForCargoTarget(
 			targetName = target.get(),
 			android = cargoProject.android,
-			ndkInfo = androidNdk.orNull,
+			androidNdkInfo = androidNdk.orNull,
+			androidCustomToolchainsDir = customToolchainsDir.get().asFile,
 		)
 
 		logger.lifecycle(

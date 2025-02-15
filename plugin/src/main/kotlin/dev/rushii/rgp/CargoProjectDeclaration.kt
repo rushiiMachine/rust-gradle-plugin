@@ -124,7 +124,7 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	internal val absoluteProjectPath = this.projectPath.map { rawPath ->
 		when (File(rawPath).isAbsolute) {
 			true -> File(rawPath)
-			else -> File(project.path, rawPath)
+			else -> File(project.projectDir, rawPath).canonicalFile
 		}
 	}
 }

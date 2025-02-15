@@ -6,7 +6,7 @@ import org.gradle.api.provider.Property
 /**
  * The configuration for the Android NDK to be used for a specific project.
  */
-public class AndroidDeclaration(project: Project) {
+public class AndroidDeclaration internal constructor(project: Project) {
 	/**
 	 * Whether to use only toolchains that have a prebuilt variant shipped with the NDK.
 	 * If this is false, then `make_standalone_toolchain.py` is invoked to **quickly** generate
