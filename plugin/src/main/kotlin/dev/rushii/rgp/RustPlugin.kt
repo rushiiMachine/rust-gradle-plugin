@@ -1,15 +1,15 @@
 package dev.rushii.rgp
 
+import dev.rushii.rgp.config.*
+import dev.rushii.rgp.tasks.*
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
-import org.gradle.api.GradleException
-import org.gradle.api.Plugin
-import org.gradle.api.Project
+import org.gradle.api.*
 import org.gradle.api.tasks.Delete
 
 @Suppress("UnnecessaryAbstractClass")
 internal abstract class RustPlugin : Plugin<Project> {
 	override fun apply(project: Project) {
-		val extension = project.extensions.create(EXTENSION_NAME, RustConfigExtension::class.java, project)
+		val extension = project.extensions.create(EXTENSION_NAME, RustExtension::class.java, project)
 
 		// Wait until extension has been configured
 		project.afterEvaluate {
@@ -29,7 +29,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 
 	private fun configurePlugin(
 		project: Project,
-		extension: RustConfigExtension,
+		extension: RustExtension,
 		androidNdk: AndroidNdkInfo?,
 	) {
 		for (cargoProject in extension.cargoProjects) {
@@ -77,7 +77,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 
 	private fun registerTasks(
 		project: Project,
-		extension: RustConfigExtension,
+		extension: RustExtension,
 		androidNdk: AndroidNdkInfo?,
 	) {
 		// Task to build all targets of all projects

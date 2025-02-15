@@ -1,5 +1,8 @@
-package dev.rushii.rgp
+package dev.rushii.rgp.tasks
 
+import dev.rushii.rgp.RustPlugin
+import dev.rushii.rgp.config.CargoProjectDeclaration
+import dev.rushii.rgp.config.RustExtension
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import dev.rushii.rgp.toolchains.AndroidToolchainInfo
 import org.gradle.api.DefaultTask
@@ -27,7 +30,7 @@ public abstract class GenerateAndroidToolchainsTask : DefaultTask() {
 	@get:Inject
 	internal abstract val execOperations: ExecOperations
 
-	private val rustExtension = this.project.extensions.getByType(RustConfigExtension::class.java)
+	private val rustExtension = this.project.extensions.getByType(RustExtension::class.java)
 	private val customToolchainsDir = this.project.layout.buildDirectory.dir("generatedToolchains")
 
 	@TaskAction

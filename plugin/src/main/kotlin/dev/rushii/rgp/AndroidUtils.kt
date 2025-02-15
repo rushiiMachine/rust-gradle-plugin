@@ -1,13 +1,11 @@
 package dev.rushii.rgp
 
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.LibraryExtension
+import com.android.build.gradle.*
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
 import org.gradle.api.GradleException
 import org.gradle.api.plugins.ExtensionContainer
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 /**
  * Obtains the configured Android Gradle plugin extension (either the [AppExtension] or [LibraryExtension]) for this project.

@@ -1,7 +1,7 @@
 package dev.rushii.rgp.toolchains
 
-import dev.rushii.rgp.AndroidDeclaration
-import dev.rushii.rgp.GenerateAndroidToolchainsTask
+import dev.rushii.rgp.config.AndroidDeclaration
+import dev.rushii.rgp.tasks.GenerateAndroidToolchainsTask
 import java.io.File
 
 internal interface ToolchainInfo {

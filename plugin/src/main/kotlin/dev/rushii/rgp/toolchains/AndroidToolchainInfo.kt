@@ -1,7 +1,7 @@
 package dev.rushii.rgp.toolchains
 
-import dev.rushii.rgp.AndroidDeclaration
-import dev.rushii.rgp.GenerateAndroidToolchainsTask
+import dev.rushii.rgp.config.AndroidDeclaration
+import dev.rushii.rgp.tasks.GenerateAndroidToolchainsTask
 import org.apache.tools.ant.taskdefs.condition.Os
 import java.io.File
 import kotlin.math.min

@@ -1,5 +1,6 @@
-package dev.rushii.rgp
+package dev.rushii.rgp.tasks
 
+import dev.rushii.rgp.RustPlugin
 import org.gradle.api.file.DuplicatesStrategy
 import org.gradle.api.tasks.Sync
 import java.io.File

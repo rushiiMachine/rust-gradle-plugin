@@ -1,4 +1,4 @@
-package dev.rushii.rgp
+package dev.rushii.rgp.config
 
 import org.gradle.api.Named
 import org.gradle.api.Project
