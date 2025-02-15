@@ -104,9 +104,11 @@ internal abstract class RustPlugin : Plugin<Project> {
 		}
 
 		for (cargoProject in extension.cargoProjects) {
-			// Delete Cargo build dir when running project clean
-			project.tasks.maybeCreate("clean", Delete::class.java).apply {
-				delete(cargoProject.absoluteProjectPath.get().resolve("target"))
+			if (extension.integrateWithPlugins.get()) {
+				// Delete Cargo build dir when running project clean
+				project.tasks.maybeCreate("clean", Delete::class.java).apply {
+					delete(cargoProject.absoluteProjectPath.get().resolve("target"))
+				}
 			}
 
 			// Task to build all targets of this specific project
@@ -140,7 +142,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 		}
 
 		// If this is an Android project, make sure AGP bundles our libs as JNI libs
-		if (androidNdk != null) {
+		if (extension.integrateWithPlugins.get() && androidNdk != null) {
 			val copyArtifactsTask = project.tasks.maybeCreate("copyRustAndroidArtifacts", CopyAndroidArtifactsTask::class.java)
 
 			project.extensions.getAndroid()
