@@ -3,7 +3,6 @@ package dev.rushii.rgp.tasks
 import dev.rushii.rgp.RustPlugin
 import dev.rushii.rgp.config.CargoProjectDeclaration
 import dev.rushii.rgp.toolchains.*
-import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
@@ -80,8 +79,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 		logger.lifecycle(
 			"Building Cargo project ${cargoProject.name.get()}" +
 					" for target ${toolchainInfo.cargoTarget}" +
-					" for project $gradleProjectNamePath"
-					+ "with profile $profile",
+					" for project $gradleProjectNamePath" +
+					" with profile $profile",
 		)
 
 		// ------------ Setup ------------ //
@@ -127,7 +126,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 			// Configure the linker wrapper to pass to Cargo later
 			// This wraps linker calls by Cargo and fixes issues with Cargo workspaces and older NDK versions
-			val linkerWrapperFileExtension = if (Os.isFamily(Os.FAMILY_WINDOWS)) "bat" else "sh"
+			val linkerWrapperFileExtension = if (RustPlugin.IS_WINDOWS) "bat" else "sh"
 			val linkerWrapperPlatformFile = gradleProjectBuildDir.get().asFile
 				.resolve("android-linker-wrapper/android-linker-wrapper.$linkerWrapperFileExtension")
 

@@ -1,5 +1,6 @@
 package dev.rushii.rgp.toolchains
 
+import dev.rushii.rgp.RustPlugin
 import dev.rushii.rgp.config.AndroidDeclaration
 import dev.rushii.rgp.tasks.GenerateAndroidToolchainsTask
 import org.apache.tools.ant.taskdefs.condition.Os
@@ -66,7 +67,7 @@ internal class AndroidToolchainInfo(
 		"i686-linux-android" -> "i686-linux-android"
 		"x86_64-linux-android" -> "x86_64-linux-android"
 		"riscv64-linux-android" -> "riscv64-linux-android"
-		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
+		else -> throw IllegalArgumentException("Unknown Android target $cargoTarget")
 	}
 
 	private val binutilsTriple: String = when (cargoTarget) {
@@ -75,7 +76,7 @@ internal class AndroidToolchainInfo(
 		"i686-linux-android" -> "i686-linux-android"
 		"x86_64-linux-android" -> "x86_64-linux-android"
 		"riscv64-linux-android" -> "UNUSED"
-		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
+		else -> throw IllegalArgumentException("Unknown Android target $cargoTarget")
 	}
 
 	val targetArch: String = when (cargoTarget) {
@@ -84,7 +85,7 @@ internal class AndroidToolchainInfo(
 		"i686-linux-android" -> "x86"
 		"x86_64-linux-android" -> "x86_64"
 		"riscv64-linux-android" -> "riscv64"
-		else -> throw IllegalArgumentException("Unknown Android toolchain $cargoTarget")
+		else -> throw IllegalArgumentException("Unknown Android target $cargoTarget")
 	}
 
 	val apiLevel: Int
@@ -177,7 +178,7 @@ internal class AndroidToolchainInfo(
 		}
 
 		return when {
-			Os.isFamily(Os.FAMILY_WINDOWS) -> "windows-$arch"
+			RustPlugin.IS_WINDOWS -> "windows-$arch"
 			Os.isFamily(Os.FAMILY_MAC) -> "darwin-x86_64"
 			else -> "linux-$arch"
 		}
@@ -187,6 +188,6 @@ internal class AndroidToolchainInfo(
 	 * Appends a file extension to a string if the host platform is Windows.
 	 */
 	private fun withWindowsExtension(original: String, windowsExt: String): String {
-		return if (Os.isFamily(Os.FAMILY_WINDOWS)) "$original.$windowsExt" else original
+		return if (RustPlugin.IS_WINDOWS) "$original.$windowsExt" else original
 	}
 }

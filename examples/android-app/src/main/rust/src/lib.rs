@@ -14,7 +14,7 @@ pub extern "system" fn JNI_OnLoad(_vm: JavaVM, _reserved: c_void) -> jint {
     JNI_VERSION_1_6
 }
 
-#[jni_fn("dev.rushii.libhello.LibHello")]
+#[jni_fn("dev.rushii.rgp.LibHello")]
 pub fn helloWorld(mut env: JNIEnv, _class: JObject, name: JString) -> jobject {
     info!("Invoked native method LibHello.helloWorld");
 

@@ -1,4 +1,4 @@
-package dev.rushii.libhello
+package dev.rushii.rgp
 
 class LibHello {
 	/**

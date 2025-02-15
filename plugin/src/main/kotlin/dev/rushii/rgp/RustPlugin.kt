@@ -3,6 +3,7 @@ package dev.rushii.rgp
 import dev.rushii.rgp.config.*
 import dev.rushii.rgp.tasks.*
 import dev.rushii.rgp.toolchains.AndroidNdkInfo
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.gradle.api.*
 import org.gradle.api.tasks.Delete
 
@@ -155,5 +156,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 	internal companion object {
 		const val EXTENSION_NAME = "rust"
 		const val TASK_GROUP = "rust"
+
+		val IS_WINDOWS = Os.isFamily(Os.FAMILY_WINDOWS)
 	}
 }

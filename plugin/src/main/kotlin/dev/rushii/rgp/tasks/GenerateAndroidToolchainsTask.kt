@@ -48,10 +48,10 @@ public abstract class GenerateAndroidToolchainsTask : DefaultTask() {
 				.dir("${toolchainInfo.targetArch}-${toolchainInfo.apiLevel}").asFile
 
 			if (outDir.exists()) {
-				logger.info("Generated toolchain ${outDir.name} already exists, skipping.")
+				logger.info("NDK toolchain ${outDir.name} already exists, skipping.")
 				continue
 			} else {
-				logger.info("Generating toolchain ${outDir.name}")
+				logger.lifecycle("Generating NDK toolchain ${outDir.name}")
 			}
 
 			// Always regenerate the toolchain, even if it exists already. It is fast to do so

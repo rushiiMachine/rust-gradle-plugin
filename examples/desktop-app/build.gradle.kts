@@ -26,7 +26,10 @@ kotlin {
 application {
 	mainClass.set("dev.rushii.libhello.Main")
 	// TODO: compile for default target & allow acquiring it?
-	applicationDefaultJvmArgs = listOf("-Djava.library.path=./build/rustLibs/x86_64-pc-windows-msvc")
+	applicationDefaultJvmArgs = listOf(
+		"-Xcheck:jni", // Debugging flag
+		"-Djava.library.path=./build/rustLibs/x86_64-pc-windows-msvc",
+	)
 }
 
 // Make sure we run Cargo when compiling
