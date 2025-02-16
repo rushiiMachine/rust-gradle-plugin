@@ -80,9 +80,9 @@ public abstract class CargoBuildTask : DefaultTask() {
 
 		logger.lifecycle(
 			"Building Cargo project ${cargoProject.name.get()}" +
-					" for target ${toolchainInfo.cargoTarget}" +
-					" for project $gradleProjectNamePath" +
-					" with profile $profile",
+				" for target ${toolchainInfo.cargoTarget}" +
+				" for project $gradleProjectNamePath" +
+				" with profile $profile",
 		)
 
 		// ------------ Setup ------------ //

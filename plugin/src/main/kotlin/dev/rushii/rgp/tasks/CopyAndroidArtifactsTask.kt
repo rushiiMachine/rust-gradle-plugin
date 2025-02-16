@@ -13,7 +13,7 @@ public abstract class CopyAndroidArtifactsTask : Sync() {
 	init {
 		group = RustPlugin.TASK_GROUP
 		description = "Copies the output binaries from builds targeting Android into " +
-				"a directory structure compatible with the Android Gradle Plugin."
+			"a directory structure compatible with the Android Gradle Plugin."
 
 		val rustExtension = project.extensions.getByType(RustExtension::class.java)
 		val rustDir = project.layout.buildDirectory.dir("rustLibs")
