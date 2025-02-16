@@ -16,7 +16,9 @@ dependencies {
 	implementation(gradleApi())
 	compileOnly(libs.androidGradle)
 
-	testImplementation(libs.junit)
+	testImplementation(libs.junit.jupiter.api)
+	testRuntimeOnly(libs.junit.jupiter.engine)
+	testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 java {
@@ -31,6 +33,10 @@ tasks.withType<KotlinCompile> {
 		if (sourceSetName.get() == "main")
 			explicitApiMode.set(ExplicitApiMode.Strict)
 	}
+}
+
+tasks.named("test", Test::class.java) {
+	useJUnitPlatform()
 }
 
 val pluginProperties = loadProperties(file("plugin.properties").absolutePath)

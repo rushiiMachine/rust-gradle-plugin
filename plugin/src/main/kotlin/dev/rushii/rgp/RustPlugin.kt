@@ -107,6 +107,7 @@ internal abstract class RustPlugin : Plugin<Project> {
 			if (extension.integrateWithPlugins.get()) {
 				// Delete Cargo build dir when running project clean
 				project.tasks.maybeCreate("clean", Delete::class.java).apply {
+					group = group ?: TASK_GROUP
 					delete(cargoProject.absoluteProjectPath.get().resolve("target"))
 				}
 			}
