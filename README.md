@@ -32,6 +32,17 @@ rust {
 // <gradleProjectDir>/build/rustLibs/<cargoTarget>
 ```
 
+`./src/main/rust/Cargo.toml`:
+
+```toml
+[package]
+name = "libhello" # Irrelevant
+
+[lib]
+name = "hello" # The libName property as specified to RGP
+crate-type = ["cdylib"] # Important!
+```
+
 ### Examples
 
 - [android-app](https://github.com/rushiiMachine/rust-gradle-plugin/tree/master/examples/android-app):
@@ -44,6 +55,89 @@ rust {
 - [desktop-app](https://github.com/rushiiMachine/rust-gradle-plugin/tree/master/examples/desktop-app):
   This is the same JNI library, except it is configured to build for the host's default Cargo target
   to run a JVM app through Gradle using the built-in `application` Gradle plugin.
+
+## Targets
+
+Each specified Cargo project target needs to be installed via `rustup`. This plugin
+does not handle installing targets. That being said, if you do not execute a build
+task for a target that is not installed, no error will occur. The only time verifying
+targets will happen is when Cargo is invoked to build a target.
+
+## Default
+
+You can specify a target named `default` to make Cargo build the default target for
+the platform. This is mainly useful for running tests requiring the native lib, since
+it will compile the target native to the platform, which can be loaded by the JVM.
+As long as you have installed Rust, the default target will be preinstalled by `rustup`.
+
+```kotlin
+rust {
+  projects {
+    create("abc") {
+      // Build for the host's default target
+      targets.addAll("default")
+    }
+  }
+}
+```
+
+Note that any default target override specified in
+Cargo's [`config.toml`](https://doc.rust-lang.org/cargo/reference/config.html#buildtarget)
+will override the default target and compile for it instead.
+
+### Android
+
+Using Android targets requires applying the Android Gradle Plugin (AGP) to the same
+Gradle project via the `com.android.application` or `com.android.library` plugins.
+Furthermore, this also requires the Android NDK to be installed, and version specified to AGP:
+
+`build.gradle.kts`:
+
+```kotlin
+android {
+  // Tie this project to a specific NDK version.
+  ndkVersion = "28.0.13004108"
+
+  // Or, use the latest installed NDK version.
+  // Use caution with this, as different NDK versions may produce
+  // different and/or possibly broken builds. It is always better
+  // to explicitly specify the target NDK version.
+  ndkVersion = sdkDirectory.resolve("ndk").listFilesOrdered().last().name
+}
+
+rust {
+  projects {
+    create("abc") {
+      // ...
+      targets.addAll(
+        "armv7-linux-androideabi", "aarch64-linux-android",
+        "i686-linux-android", "x86_64-linux-android",
+      )
+    }
+  }
+}
+```
+
+#### Supported NDK versions
+
+TODO
+
+### iOS
+
+Work in progress.
+
+### macOS
+
+Work in progress.
+
+### Native or other targets
+
+Assuming your target is not covered by one of the sections above, this plugin
+assumes any other target you specify will succeed without any extra fixes.
+This likely means you're trying to build for the current platform.
+
+If you need to do some sort of toolchain massaging, add compiler/linker flags, etc.,
+see the [TODO](#todo) section.
 
 ## Credits
 
