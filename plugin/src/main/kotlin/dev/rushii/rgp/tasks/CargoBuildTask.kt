@@ -113,6 +113,7 @@ public abstract class CargoBuildTask : DefaultTask() {
 			"build",
 			"--profile=$profile",
 			if (!isDefaultTarget) "--target=$target" else "",
+			if (logger.isInfoEnabled || logger.isDebugEnabled) "-v" else "",
 			*extraArguments.toTypedArray(),
 		).apply {
 			removeIf { it.isBlank() }
