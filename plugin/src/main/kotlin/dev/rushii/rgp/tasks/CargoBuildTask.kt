@@ -1,9 +1,11 @@
 package dev.rushii.rgp.tasks
 
 import dev.rushii.rgp.RustPlugin
+import dev.rushii.rgp.config.AndroidDeclaration
 import dev.rushii.rgp.config.CargoProjectDeclaration
 import dev.rushii.rgp.toolchains.*
 import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
 import org.gradle.api.file.FileSystemOperations
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
@@ -133,8 +135,8 @@ public abstract class CargoBuildTask : DefaultTask() {
 			cargoEnvVars["RGP_PYTHON_CMD"] = toolchainInfo.python().absolutePath
 			cargoEnvVars["RGP_LINKER_WRAPPER"] = linkerWrapperPlatformFile.resolveSibling("android-linker-wrapper.py").absolutePath
 			cargoEnvVars["RGP_CC"] = toolchainInfo.cc().absolutePath
-			cargoEnvVars["RGP_CC_LINK_ARGS"] = "-Wl,--build-id,-soname,lib${libName!!}.so" // FIXME non-null assertion
 			cargoEnvVars["RGP_NDK_MAJOR_VERSION"] = toolchainInfo.ndk.versionMajor
+			cargoEnvVars["RGP_CC_LINK_ARGS"] = obtainExtraAndroidLinkerArgs(cargoProject.android, toolchainInfo.ndk)
 
 			// Make Cargo invoke our platform-specific linker wrapper script
 			val cargoEnvTargetName = toolchainInfo.cargoTarget.uppercase(Locale.ROOT).replace('-', '_')
@@ -174,5 +176,48 @@ public abstract class CargoBuildTask : DefaultTask() {
 			spec.into(outputDir)
 			spec.include(buildIncludes)
 		}
+	}
+
+	private fun obtainExtraAndroidLinkerArgs(config: AndroidDeclaration, ndk: AndroidNdkInfo): String {
+		var linkArgs = "-Wl"
+
+		// Enable 16KiB page alignment to support newer Android ROMs
+		// https://developer.android.com/guide/practices/page-sizes#other-build-systems
+		when {
+			// r28 already uses 16KiB page alignment by default
+			ndk.versionMajor >= 28 -> {}
+
+			// Warn user if the option to use 16KiB page alignment is disabled
+			!config.experimentalPageAlignment.get() -> logger.warn(
+				"[warning] This build will not utilize 16KiB page alignment! This build will not be usable on Android ROMs that utilize" +
+					" 16KiB page alignment! See https://developer.android.com/guide/practices/page-sizes for more information." +
+					" If you are building with NDK r27, please enable the experimentalPageAlignment option," +
+					" or upgrade to NDK r28+ which supports 16KiB page alignment by default." +
+					" Current NDK version: ${ndk.version}",
+			)
+
+			// NDK r27 supports experimental 16KiB page alignment
+			ndk.versionMajor >= 27 -> linkArgs += ",-z,max-page-size=16384"
+
+			// Check if running one of the canary revisions of an LTS NDK that
+			// backported the 16KiB page alignment to precompiled NDK libraries.
+			(ndk.versionMajor == 21 && ndk.versionRevision >= 12105395)
+				|| (ndk.versionMajor == 23 && ndk.versionRevision >= 12099874)
+				|| (ndk.versionMajor == 25 && ndk.versionRevision >= 12093701) -> {
+				linkArgs += ",-z,max-page-size=16384,common-page-size=16384"
+			}
+
+			// Any other version can technically compile with 16KiB page alignment, however
+			// the precompiled shared libraries are not. Just tell the user to upgrade their NDK.
+			else -> throw GradleException(
+				"Cannot use experimental 16KiB page alignment with a NDK" +
+					" that does not contain precompiled libraries also built with 16KiB page alignment." +
+					" Please update to at least NDK r27 which supports experimental 16KiB page alignment." +
+					" Alternatively, update to NDK r28 which fully supports 16KiB page alignment," +
+					" meaning `experimentalPageAlignment` could be disabled.",
+			)
+		}
+
+		return linkArgs
 	}
 }

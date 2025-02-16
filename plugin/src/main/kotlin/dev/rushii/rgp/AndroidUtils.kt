@@ -31,7 +31,11 @@ internal fun BaseExtension.getNdkInfo(): AndroidNdkInfo {
 
 	val ndkProps = Properties().apply { load(ndkPropsFile.inputStream()) }
 	val ndkVersion = ndkProps.getProperty("Pkg.Revision", "0.0")
-	val ndkVersionMajor = ndkVersion.split(".").first().toInt()
 
-	return AndroidNdkInfo(path = ndkDirectory, versionMajor = ndkVersionMajor)
+	return AndroidNdkInfo(
+		path = ndkDirectory,
+		version = ndkVersion,
+		versionMajor = ndkVersion.split(".").first().toInt(),
+		versionRevision = ndkVersion.split(".").last().toInt(),
+	)
 }

@@ -27,4 +27,25 @@ public class AndroidDeclaration internal constructor(project: Project) {
 	 * Defaults to the `minSdkVersion` property of the Android Gradle plugin.
 	 */
 	public val apiLevel: Property<Int> = project.objects.property(Int::class.java)
+
+	/**
+	 * Sets the necessary linker flags to enable 16KiB page alignment. See
+	 * [developer.android.com/guide/practices/page-sizes](https://developer.android.com/guide/practices/page-sizes)
+	 * for more information
+	 *
+	 * This only has an impact when the currently used NDK meets one of the following conditions:
+	 * - Is NDK r27
+	 * - Is a canary release of LTS NDK r21 with a revision number of at least `12105395`.
+	 *   [CI page](https://ci.android.com/builds/branches/aosp-ndk-release-r21/grid?legacy=1)
+	 * - Is a canary release of LTS NDK r23 with a revision number of at least `12099874`.
+	 *   [CI page](https://ci.android.com/builds/branches/aosp-ndk-release-r23/grid?legacy=1)
+	 * - Is a canary release of LTS NDK r25 with a revision number of at least `12093701`.
+	 *   [CI page](https://ci.android.com/builds/branches/aosp-ndk-r25-release/grid?legacy=1)
+	 *
+	 * By default, this is `false`. However, if you are using NDK r28 or above, 16KiB page alignment is
+	 * already enabled by default and no longer experimental.
+	 */
+	public val experimentalPageAlignment: Property<Boolean> = project.objects
+		.property(Boolean::class.java)
+		.convention(false)
 }
