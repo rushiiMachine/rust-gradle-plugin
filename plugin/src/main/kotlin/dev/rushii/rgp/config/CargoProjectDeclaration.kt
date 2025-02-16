@@ -93,6 +93,8 @@ public abstract class CargoProjectDeclaration @Inject internal constructor(name:
 	 * A list of targets that will each be built by Cargo.
 	 *
 	 * Each target must be a valid target triple as defined by Cargo [here](https://doc.rust-lang.org/nightly/rustc/platform-support.html).
+	 * Alternatively, in order to target the current host platform, use the sentinel target `default` in order to also
+	 * build for the default target. Note that any default target overrides in `config.toml` will apply.
 	 */
 	public val targets: SetProperty<String> = project.objects.setProperty(String::class.java)
 

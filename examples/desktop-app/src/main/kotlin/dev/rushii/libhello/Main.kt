@@ -2,6 +2,6 @@
 
 package dev.rushii.libhello
 
-public fun main() {
+fun main() {
 	println(LibHello().helloWorld("Juan"))
 }

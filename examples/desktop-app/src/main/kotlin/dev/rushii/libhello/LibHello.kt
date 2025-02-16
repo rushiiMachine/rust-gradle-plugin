@@ -1,10 +1,10 @@
 package dev.rushii.libhello
 
-public class LibHello {
+class LibHello {
 	/**
 	 * Invokes the native method through JNI to return `Hello ${name}!`
 	 */
-	public external fun helloWorld(name: String): String
+	external fun helloWorld(name: String): String
 
 	private companion object {
 		init {

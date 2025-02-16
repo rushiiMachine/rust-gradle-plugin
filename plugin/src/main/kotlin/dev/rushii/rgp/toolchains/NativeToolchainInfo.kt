@@ -9,4 +9,9 @@ package dev.rushii.rgp.toolchains
  */
 internal class NativeToolchainInfo(
 	override val cargoTarget: String,
-) : ToolchainInfo
+) : ToolchainInfo {
+	/**
+	 * Sentinel value to specify that the default Cargo target should be used.
+	 */
+	val isDefaultTarget = cargoTarget == "default"
+}

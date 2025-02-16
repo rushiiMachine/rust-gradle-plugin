@@ -14,28 +14,24 @@ rust {
 			projectPath.set("./src/main/rust")
 			libName.set("hello")
 			profile.set("release")
-			targets.addAll("x86_64-pc-windows-msvc", "i686-pc-windows-msvc")
+			targets.addAll("default") // Target the host's default target
 		}
 	}
 }
 
-kotlin {
-	explicitApi()
-}
-
-application {
-	mainClass.set("dev.rushii.libhello.Main")
-	// TODO: compile for default target & allow acquiring it?
-	applicationDefaultJvmArgs = listOf(
-		"-Xcheck:jni", // Debugging flag
-		"-Djava.library.path=./build/rustLibs/x86_64-pc-windows-msvc",
-	)
-}
-
-// Make sure we run Cargo when compiling
+// Make sure we run Cargo when building
+// `processResources` task is added by the `application` plugin
 tasks.getByName("processResources").dependsOn("cargoBuildAll")
 
-// Delete Cargo build dir when running clean from Gradle
-tasks.maybeCreate("clean", Delete::class.java).apply {
-	delete("./src/main/rust/target")
+// The app is runnable through the `run` task
+application {
+	mainClass.set("dev.rushii.libhello.Main")
+
+	applicationDefaultJvmArgs = listOf(
+		// Optional debugging flag for development
+		"-Xcheck:jni",
+
+		// Uses the build for the default target
+		"-Djava.library.path=./build/rustLibs/default",
+	)
 }

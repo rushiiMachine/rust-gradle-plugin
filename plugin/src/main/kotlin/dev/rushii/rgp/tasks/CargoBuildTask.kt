@@ -104,14 +104,19 @@ public abstract class CargoBuildTask : DefaultTask() {
 			else -> extraIncludes
 		}
 
+		// Check if we're going to let Cargo determine the default target
+		val isDefaultTarget = (toolchainInfo as? NativeToolchainInfo)?.isDefaultTarget == true
+
 		val cargoEnvVars = mutableMapOf<String, Any?>().apply { putAll(System.getenv()) }
 		val cargoCommandLine = mutableListOf(
 			cargoExe,
 			"build",
-			"--target=$target",
 			"--profile=$profile",
+			if (!isDefaultTarget) "--target=$target" else "",
 			*extraArguments.toTypedArray(),
-		)
+		).apply {
+			removeIf { it.isBlank() }
+		}
 
 		// Configure Android compilation
 		if (toolchainInfo is AndroidToolchainInfo) {
@@ -171,8 +176,12 @@ public abstract class CargoBuildTask : DefaultTask() {
 				"dev" -> "debug"
 				else -> profile
 			}
+			val targetDirPath = when (isDefaultTarget) {
+				false -> "target/$target/$fixedProfile"
+				true -> "target/$fixedProfile"
+			}
 
-			spec.from(projectPath.resolve("target/$target/$fixedProfile"))
+			spec.from(projectPath.resolve(targetDirPath))
 			spec.into(outputDir)
 			spec.include(buildIncludes)
 		}
